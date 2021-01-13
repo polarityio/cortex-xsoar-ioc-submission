@@ -1,6 +1,6 @@
-# Polarity ___ Integration
+# Polarity Cortex XSOAR IOC Submission Integration
 
-The Polarity ___ integration allows Polarity to search your instance of ___ to return found domains, IPs, hashes, and emails.  The integration also allows you to Create and Delete Indicators (IOCs) in bulk from ___.
+The Polarity Cortex XSOAR IOC Submission integration allows Polarity to search your instance of Cortex XSOAR to return found domains, IPs, hashes, and emails.  The integration also allows you to Create and Delete Indicators and Incidents (IOCs) in bulk from Cortex XSOAR.
 
 
 //TODO: retake screenshot
@@ -8,23 +8,29 @@ The Polarity ___ integration allows Polarity to search your instance of ___ to r
   <img width="400" alt="Integration Example" src="./assets/integration-example.png">
 </div>
 
-## ___ Integration Options
+## Cortex XSOAR IOC Submission Integration Options
 
-### ___ Instance URL
+### Cortex XSOAR Instance URL
 
-The URL of the ___ instance you would like to connect to (including http:// or https://).  If you are running an internal instance of ___ on a non-default port, please specify the port here as well.
+The base URL for the Cortex XSOAR API which should include the schema (i.e., https://)
 
 ### API Key
 
-The API (secret) Key associated with the provided Access ID
+A valid Cortex XSOAR API Key which can be found in your Cortex XSOAR Dashboard Settings.
 
 //TODO: Add other integration options here
 
-### Allow IOC Deletion
+### Allow Indicator Deletion
 
-If checked, users will be able to delete an Indicator from ___. (this setting must be set to `User can view only`).
+If checked, users will be able to delete an Indicator from Cortex XSOAR. (this setting must be set to `User can view only`).
 
 > ***NOTE***: When you delete an Indicator you are doing a deletion of the Indicator from the entire system.
+> 
+### Allow Incident Deletion
+
+If checked, users will be able to delete an Incident from Cortex XSOAR. (this setting must be set to `User can view only`).
+
+> ***NOTE***: When you delete an Incident you are doing a deletion of the Incident from the entire system.
 
 ## Installation Instructions
 

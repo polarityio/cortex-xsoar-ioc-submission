@@ -2,9 +2,11 @@
 
 const validateOptions = require('./src/validateOptions');
 const createRequestWithDefaults = require('./src/createRequestWithDefaults');
-const submitItems = require('./src/submitItems');
 const searchTags = require('./src/searchTags');
 const deleteItem = require('./src/deleteItem');
+const searchIndicatorTypes = require('./src/searchIndicatorTypes');
+const searchIncidentTypes = require('./src/searchIncidentTypes');
+const createIndicators = require('./src/createIndicators');
 
 const { handleError } = require('./src/handleError');
 const { getLookupResults } = require('./src/getLookupResults');
@@ -43,8 +45,10 @@ const doLookup = async (entities, { url, ..._options }, cb) => {
 
 const getOnMessage = {
   DELETE_ITEM: deleteItem,
-  SUBMIT_ITEMS: submitItems,
-  SEARCH_TAGS: searchTags
+  SUBMIT_ITEMS: createIndicators,
+  SEARCH_TAGS: searchTags,
+  SEARCH_INDICATOR_TYPES: searchIndicatorTypes,
+  SEARCH_INCIDENT_TYPES: searchIncidentTypes
 };
 
 const onMessage = ({ data: { action, ...actionParams} }, options, callback) => 

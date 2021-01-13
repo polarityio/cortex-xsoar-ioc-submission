@@ -1,68 +1,45 @@
 const fp = require('lodash/fp');
 
-const { partitionFlatMap, splitOutIgnoredIps } = require('./dataTransformations');
+const { splitOutIgnoredIps } = require('./dataTransformations');
 const createLookupResults = require('./createLookupResults');
+const getPlaybooksByEntityGroup = require('./getPlaybooksByEntityGroup');
+const queryIncidents = require('./queryIncidents');
+const queryIndicators = require('./queryIndicators');
 
-const getLookupResults = (entities, options, requestWithDefaults, Logger) =>
-  partitionFlatMap(
-    async (_entitiesPartition) => {
-      const { entitiesPartition, ignoredIpLookupResults } = splitOutIgnoredIps(
-        _entitiesPartition
-      );
+const getLookupResults = async (entities, options, requestWithDefaults, Logger) => {
+  const { entitiesPartition, ignoredIpLookupResults } = splitOutIgnoredIps(entities);
 
-      const foundEntities = await _getFoundEntities(
-        entitiesPartition,
-        options,
-        requestWithDefaults
-      );
-
-      const lookupResults = createLookupResults(
-        options,
-        entitiesPartition,
-        foundEntities,
-        Logger
-      );
-
-      Logger.trace({ lookupResults, foundEntities }, 'Lookup Results');
-
-      return lookupResults.concat(ignoredIpLookupResults);
-    },
-    20,
-    entities
+  const entityGroupsWithPlaybooks = await getPlaybooksByEntityGroup(
+    entitiesPartition,
+    options,
+    requestWithDefaults,
+    Logger
   );
 
-
-const _getFoundEntities = async (
-  entitiesPartition,
-  options,
-  requestWithDefaults
-) => {
-
-  const foundEntities = fp.compact(
-    await Promise.all(
-      fp.map(async (entity) => {
-        const searchResults = await fp.getOr(
-          [],
-          'body.data', // TODO: Modify with correct data path
-          await requestWithDefaults({
-            //TODO: Add properties for search request
-            options
-          })
-        );
-
-        return (
-          searchResults &&
-          searchResults.length && {
-            ...entity,
-            // TODO: Custom data transformation for search results go here
-          }
-        );
-      }, entitiesPartition)
-    )
+  const foundIndicatorEntities = await queryIndicators(
+    entitiesPartition,
+    options,
+    requestWithDefaults,
+    Logger
   );
 
-  return foundEntities;
+  const lookupResults = createLookupResults(
+    entitiesPartition,
+    foundIndicatorEntities,
+    entityGroupsWithPlaybooks,
+    options,
+    Logger
+  );
+
+  Logger.trace(
+    { lookupResults, foundIndicatorEntities, entityGroupsWithPlaybooks },
+    'Lookup Results'
+  );
+
+  return lookupResults.concat(ignoredIpLookupResults);
 };
+
+
 
 module.exports = {
   getLookupResults

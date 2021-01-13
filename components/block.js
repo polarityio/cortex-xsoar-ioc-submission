@@ -2,11 +2,21 @@ polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
   maxUniqueKeyNumber: Ember.computed.alias('details.maxUniqueKeyNumber'),
   url: Ember.computed.alias('details.url'),
-  // TODO: Submission Options Initial Variables goes here
+  summary: Ember.computed.alias('block.data.summary'),
+  incidents: Ember.computed.alias('details.incidents'),
+  indicators: Ember.computed.alias('details.indicators'),
+  playbooks: Ember.computed.alias('details.playbooks'),
+  submissionDetails: '',
+  indicatorComment: '',
+  severity: 0,
+  reputation: 0,
+  incidentMessage: '',
+  incidentErrorMessage: '',
+  incidentPlaybookId: null,
+  isRunning: false,
   foundEntities: [],
   newIocs: [],
   newIocsToSubmit: [],
-  selectedTags: [],
   deleteMessage: '',
   deleteErrorMessage: '',
   deleteIsRunning: false,
@@ -15,9 +25,6 @@ polarity.export = PolarityComponent.extend({
   createMessage: '',
   createErrorMessage: '',
   createIsRunning: false,
-  selectedTag: [],
-  editingTags: false,
-  maxTagsInBlock: 10,
   interactionDisabled: Ember.computed('isDeleting', 'createIsRunning', function () {
     return this.get('isDeleting') || this.get('createIsRunning');
   }),
@@ -34,11 +41,6 @@ polarity.export = PolarityComponent.extend({
 
     // TODO Add any other properties here that are either objects or arrays that will be modified in the course of using this integration
 
-    this.set('selectedTags', [
-      {
-        name: 'Submitted By Polarity'
-      }
-    ]);
     this._super(...arguments);
   },
   observer: Ember.on(
@@ -63,7 +65,7 @@ polarity.export = PolarityComponent.extend({
       }
     })
   ),
-  searchTags: function (term, resolve, reject) {
+  searchIncidentTypes: function (term, resolve, reject) {
     const outerThis = this;
     outerThis.set('createMessage', '');
     outerThis.set('createErrorMessage', '');
@@ -72,21 +74,52 @@ polarity.export = PolarityComponent.extend({
     outerThis
       .sendIntegrationMessage({
         data: {
-          action: 'SEARCH_TAGS',
-          term,
-          selectedTags: this.get('selectedTags')
+          action: 'SEARCH_INCIDENT_TYPES',
+          selectedIncidentType: outerThis.get('selectedIncidentType'),
+          term
         }
       })
-      .then(({ tags }) => {
-        outerThis.set(
-          'existingTags',
-          [...(term ? [{ name: term, isNew: true }] : [])].concat(tags)
-        );
+      .then(({ types }) => {
+        outerThis.set('foundIncidentTypes', types);
       })
       .catch((err) => {
-        outerThis.set(
-          'createErrorMessage',
-          'Search Tags Failed: ' +
+        outerThis.set('createErrorMessage',
+          'Search Incident Types Failed: ' +
+            (err &&
+              (err.detail || err.err || err.message || err.title || err.description)) ||
+            'Unknown Reason'
+        );
+      })
+      .finally(() => {
+        outerThis.get('block').notifyPropertyChange('data');
+        setTimeout(() => {
+          outerThis.set('createMessage', '');
+          outerThis.set('createErrorMessage', '');
+          outerThis.get('block').notifyPropertyChange('data');
+        }, 5000);
+        resolve();
+      });
+  },
+  searchIndicatorTypes: function (term, resolve, reject) {
+    const outerThis = this;
+    outerThis.set('createMessage', '');
+    outerThis.set('createErrorMessage', '');
+    outerThis.get('block').notifyPropertyChange('data');
+
+    outerThis
+      .sendIntegrationMessage({
+        data: {
+          action: 'SEARCH_INDICATOR_TYPES',
+          selectedIndicatorType: outerThis.get('selectedIndicatorType'),
+          term
+        }
+      })
+      .then(({ types }) => {
+        outerThis.set('foundIndicatorTypes', types);
+      })
+      .catch((err) => {
+        outerThis.set('createErrorMessage',
+          'Search Indicator Types Failed: ' +
             (err &&
               (err.detail || err.err || err.message || err.title || err.description)) ||
             'Unknown Reason'
@@ -104,6 +137,16 @@ polarity.export = PolarityComponent.extend({
   },
   actions: {
     // TODO: Add boolean value toggling action functions here
+    searchIncidentTypes: function (term) {
+      return new Ember.RSVP.Promise((resolve, reject) => {
+        Ember.run.debounce(this, this.searchIncidentTypes, term, resolve, reject, 500);
+      });
+    },
+    searchIndicatorTypes: function (term) {
+      return new Ember.RSVP.Promise((resolve, reject) => {
+        Ember.run.debounce(this, this.searchIndicatorTypes, term, resolve, reject, 500);
+      });
+    },
     initiateItemDeletion: function (entity) {
       this.set('isDeleting', true);
       this.set('entityToDelete', entity);
@@ -171,7 +214,7 @@ polarity.export = PolarityComponent.extend({
     },
     removeSubmitItem: function (entity) {
       this.set('newIocs', this.get('newIocs').concat(entity));
-      
+
       this.set(
         'newIocsToSubmit',
         this.get('newIocsToSubmit').filter(({ value }) => value !== entity.value)
@@ -225,9 +268,11 @@ polarity.export = PolarityComponent.extend({
           data: {
             action: 'SUBMIT_ITEMS',
             newIocsToSubmit: outerThis.get('newIocsToSubmit'),
-            // TODO: Add Submission option properties here
             foundEntities: outerThis.get('foundEntities'),
-            submitTags: outerThis.get('selectedTags')
+            summary: this.get('summary'),
+            reputation: this.get('reputation'),
+            indicatorComment: this.get('indicatorComment'),
+            selectedIndicatorType: this.get('selectedIndicatorType')
           }
         })
         .then(({ foundEntities }) => {
@@ -252,41 +297,6 @@ polarity.export = PolarityComponent.extend({
             outerThis.get('block').notifyPropertyChange('data');
           }, 5000);
         });
-    },
-    editTags: function () {
-      this.toggleProperty('editingTags');
-      this.get('block').notifyPropertyChange('data');
-    },
-    deleteTag: function (tagToDelete) {
-      this.set(
-        'selectedTags',
-        this.get('selectedTags').filter(
-          (selectedTag) => selectedTag.name !== tagToDelete.name
-        )
-      );
-    },
-    searchTags: function (term) {
-      return new Ember.RSVP.Promise((resolve, reject) => {
-        Ember.run.debounce(this, this.searchTags, term, resolve, reject, 600);
-      });
-    },
-    addTags: function (tags) {
-      const selectedTag = this.get('selectedTag');
-      const selectedTags = this.get('selectedTags');
-
-      this.set('createMessage', '');
-
-      let newSelectedTags = selectedTag.filter(
-        (tag) =>
-          !selectedTags.some(
-            (selectedTag) =>
-              tag.name.toLowerCase().trim() === selectedTag.name.toLowerCase().trim()
-          )
-      );
-
-      this.set('selectedTags', selectedTags.concat(newSelectedTags));
-      this.set('selectedTag', []);
-      this.set('editingTags', false);
     }
 
     // TODO: Add logic based action functions here

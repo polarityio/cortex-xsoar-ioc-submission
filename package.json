@@ -1,6 +1,6 @@
 {
   "main": "./integration.js",
-  "name": "___-ioc-submission",
+  "name": "cortex-xsoar-ioc-submission",
   "version": "3.0.0-beta",
   "private": true,
   "license": "MIT",

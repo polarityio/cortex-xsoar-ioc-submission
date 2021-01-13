@@ -8,12 +8,24 @@ const deleteItem = async (
   callback
 ) => {
   try {
-    // await requestWithDefaults({
-    //   // TODO: Add request options for deletion logic
-    //   options
-    // });
+    await requestWithDefaults({
+      url: `${options.url}/indicators/batchDelete`,
+      method: 'POST',
+      headers: {
+        authorization: options.apiKey,
+        'Content-type': 'application/json'
+      },
+      body: {
+        ids: [entity.id],
+        reason: 'Deleted by Polarity IOC Submission Integration',
+        all: false,
+        filter: {},
+        doNotWhitelist: true,
+        reputations: null
+      }
+    });
   } catch (error) {
-    Logger.error(error, 'Item Deletion Error');
+    Logger.error(error, 'Indicator Deletion Error');
     return callback({
       errors: [
         {

@@ -4,18 +4,19 @@ const { ENTITY_DISPLAY_TYPES } = require('./constants');
 let maxUniqueKeyNumber = 0;
 
 const createLookupResults = (
-  options,
   entities,
-  _foundEntities,
+  _foundIndicatorEntities,
+  entityGroupsWithPlaybooks,
+  options,
   Logger
 ) => {
-  const foundEntities = getFoundEntities(_foundEntities, entities);
+  const foundIndicatorEntities = getFoundEntities(_foundIndicatorEntities, entities);
 
-  const notFoundEntities = getNotFoundEntities(foundEntities, entities);
+  const notFoundIndicatorEntities = getNotFoundEntities(foundIndicatorEntities, entities);
 
   const summary = [
-    ...(foundEntities.length ? ['Entities Found'] : []),
-    ...(notFoundEntities.length ? ['New Entites'] : [])
+    ...(foundIndicatorEntities.length ? ['Indicators Found'] : []),
+    ...(notFoundIndicatorEntities.length ? ['New Entities'] : [])
   ];
   maxUniqueKeyNumber++;
 
@@ -23,17 +24,17 @@ const createLookupResults = (
     {
       entity: {
         ...entities[0],
-        value: '___ IOC Submission'
+        value: 'Cortex XSOAR IOC Submission'
       },
       isVolatile: true,
       data: {
         summary,
         details: {
-          url: options.url,
+          url: `${options.url}/#`,
           maxUniqueKeyNumber,
           [`summary${maxUniqueKeyNumber}`]: summary,
-          [`foundEntities${maxUniqueKeyNumber}`]: foundEntities,
-          [`notFoundEntities${maxUniqueKeyNumber}`]: notFoundEntities
+          [`foundEntities${maxUniqueKeyNumber}`]: foundIndicatorEntities,
+          [`notFoundEntities${maxUniqueKeyNumber}`]: notFoundIndicatorEntities
         }
       }
     }
@@ -47,7 +48,10 @@ const getFoundEntities = (_foundEntities, entities) =>
     ),
     fp.map((foundEntity) => ({
       ...foundEntity,
-      displayedType: ENTITY_DISPLAY_TYPES[foundEntity.type]
+      displayedType: fp.flow(
+        fp.find(({ value }) => fp.toLower(value) === fp.toLower(foundEntity.value)),
+        getDisplayType
+      )(entities)
     }))
   )(_foundEntities);
 
@@ -60,11 +64,19 @@ const getNotFoundEntities = (foundEntities, entities) =>
       )
         ? agg.concat({
             ...entity,
-            displayedType: ENTITY_DISPLAY_TYPES[entity.type]
+            displayedType: getDisplayType(entity)
           })
         : agg,
     [],
     entities
+  );
+
+const getDisplayType = (entity) =>
+  fp.get(
+    fp.get('isHash', entity)
+      ? fp.get('hashType', entity)
+      : fp.get('type', entity),
+    ENTITY_DISPLAY_TYPES
   );
 
 module.exports = createLookupResults;
