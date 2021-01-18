@@ -7,25 +7,27 @@ const queryIncidents = async (
   Logger
 ) => {
   const entityValues = fp.map(fp.get('value'), entitiesPartition);
-  const {
-    body: { data: incidents }
-  } = await requestWithDefaults({
-    url: `${options.url}/incidents/search`,
-    method: 'POST',
-    headers: {
-      authorization: options.apiKey,
-      'Content-type': 'application/json'
-    },
-    body: {
-      filter: {
-        name: entityValues,
-        labels: entityValues
+  
+  const incidents = fp.get(
+    'body.data',
+    await requestWithDefaults({
+      url: `${options.url}/incidents/search`,
+      method: 'POST',
+      headers: {
+        authorization: options.apiKey,
+        'Content-type': 'application/json'
+      },
+      body: {
+        filter: {
+          name: entityValues,
+          labels: entityValues
+        }
       }
-    }
-  }).catch((error) => {
-    Logger.error({ error }, 'Incident Query Error');
-    throw error;
-  });
+    }).catch((error) => {
+      Logger.error({ error }, 'Incident Query Error');
+      throw error;
+    })
+  );
 
   return incidents;
 };

@@ -11,6 +11,7 @@ const searchIndicatorTypes = async (
     const types = fp.flow(
       fp.getOr([], 'body'),
       searchByTerm(term, selectedIndicatorType),
+      fp.filter(fp.negate(fp.get('disabled'))),
       fp.sortBy('details'),
       fp.slice(0, 50)
     )(

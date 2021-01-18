@@ -2,44 +2,79 @@ polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
   maxUniqueKeyNumber: Ember.computed.alias('details.maxUniqueKeyNumber'),
   url: Ember.computed.alias('details.url'),
-  summary: Ember.computed.alias('block.data.summary'),
   incidents: Ember.computed.alias('details.incidents'),
   indicators: Ember.computed.alias('details.indicators'),
   playbooks: Ember.computed.alias('details.playbooks'),
-  submissionDetails: '',
+  activeTab: 'incidents',
   indicatorComment: '',
-  severity: 0,
   reputation: 0,
+  submissionDetails: '',
+  severity: 0,
+
   incidentMessage: '',
   incidentErrorMessage: '',
   incidentPlaybookId: null,
-  isRunning: false,
-  foundEntities: [],
-  newIocs: [],
-  newIocsToSubmit: [],
-  deleteMessage: '',
-  deleteErrorMessage: '',
-  deleteIsRunning: false,
-  isDeleting: false,
-  entityToDelete: {},
-  createMessage: '',
-  createErrorMessage: '',
-  createIsRunning: false,
-  interactionDisabled: Ember.computed('isDeleting', 'createIsRunning', function () {
-    return this.get('isDeleting') || this.get('createIsRunning');
-  }),
+  foundIncidentEntities: [],
+  newIncidentIocs: [],
+  newIncidentIocsToSubmit: [],
+  incidentDeleteMessage: '',
+  incidentDeleteErrorMessage: '',
+  incidentDeleteIsRunning: false,
+  incidentIsDeleting: false,
+  incidentToDelete: {},
+  createIncidentMessage: '',
+  createIncidentErrorMessage: '',
+  createIncidentsIsRunning: false,
+
+  incidentMessage: '',
+  incidentErrorMessage: '',
+  foundIndicatorEntities: [],
+  newIndicatorIocs: [],
+  newIndicatorIocsToSubmit: [],
+  indicatorDeleteMessage: '',
+  indicatorDeleteErrorMessage: '',
+  indicatorDeleteIsRunning: false,
+  indicatorIsDeleting: false,
+  indicatorToDelete: {},
+  createIndicatorMessage: '',
+  createIndicatorErrorMessage: '',
+  createIndicatorsIsRunning: false,
+  interactionDisabled: Ember.computed(
+    'indicatorIsDeleting',
+    'createIndicatorsIsRunning',
+    'incidentIsDeleting',
+    'createIncidentsIsRunning',
+    function () {
+      return (
+        this.get('incidentIsDeleting') ||
+        this.get('createIncidentsIsRunning') ||
+        this.get('indicatorIsDeleting') ||
+        this.get('createIndicatorsIsRunning')
+      );
+    }
+  ),
   init() {
     this.set(
-      'newIocs',
-      this.get(`details.notFoundEntities${this.get('maxUniqueKeyNumber')}`)
+      'newIndicatorIocs',
+      this.get(`details.notFoundIndicatorEntities${this.get('maxUniqueKeyNumber')}`)
     );
 
     this.set(
-      'foundEntities',
-      this.get(`details.foundEntities${this.get('maxUniqueKeyNumber')}`)
+      'foundIndicatorEntities',
+      this.get(`details.foundIndicatorEntities${this.get('maxUniqueKeyNumber')}`)
     );
 
-    // TODO Add any other properties here that are either objects or arrays that will be modified in the course of using this integration
+    this.set(
+      'newIncidentIocs',
+      this.get(`details.notFoundIncidentEntities${this.get('maxUniqueKeyNumber')}`)
+    );
+
+    this.set(
+      'foundIncidentEntities',
+      this.get(`details.foundIncidentEntities${this.get('maxUniqueKeyNumber')}`)
+    );
+
+    this.set('playbooks', this.get(`details.playbooks${this.get('maxUniqueKeyNumber')}`));
 
     this._super(...arguments);
   },
@@ -50,25 +85,40 @@ polarity.export = PolarityComponent.extend({
         this.set('_maxUniqueKeyNumber', this.get('maxUniqueKeyNumber'));
 
         this.set(
-          'newIocs',
-          this.get(`details.notFoundEntities${this.get('maxUniqueKeyNumber')}`)
+          'newIndicatorIocs',
+          this.get(`details.notFoundIndicatorEntities${this.get('maxUniqueKeyNumber')}`)
         );
 
         this.set(
-          'foundEntities',
-          this.get(`details.foundEntities${this.get('maxUniqueKeyNumber')}`)
+          'foundIndicatorEntities',
+          this.get(`details.foundIndicatorEntities${this.get('maxUniqueKeyNumber')}`)
         );
 
-        // TODO Add any other properties here that are either objects or arrays that will be modified in the course of using this integration
+        this.set('newIndicatorIocsToSubmit', []);
 
-        this.set('newIocsToSubmit', []);
+        this.set(
+          'newIncidentIocs',
+          this.get(`details.notFoundIncidentEntities${this.get('maxUniqueKeyNumber')}`)
+        );
+
+        this.set(
+          'foundIncidentEntities',
+          this.get(`details.foundIncidentEntities${this.get('maxUniqueKeyNumber')}`)
+        );
+        
+        this.set(
+          'playbooks',
+          this.get(`details.playbooks${this.get('maxUniqueKeyNumber')}`)
+        );
+
+        this.set('newIncidentIocsToSubmit', []);
       }
     })
   ),
   searchIncidentTypes: function (term, resolve, reject) {
     const outerThis = this;
-    outerThis.set('createMessage', '');
-    outerThis.set('createErrorMessage', '');
+    outerThis.set('createIncidentMessage', '');
+    outerThis.set('createIncidentErrorMessage', '');
     outerThis.get('block').notifyPropertyChange('data');
 
     outerThis
@@ -83,7 +133,8 @@ polarity.export = PolarityComponent.extend({
         outerThis.set('foundIncidentTypes', types);
       })
       .catch((err) => {
-        outerThis.set('createErrorMessage',
+        outerThis.set(
+          'createIncidentErrorMessage',
           'Search Incident Types Failed: ' +
             (err &&
               (err.detail || err.err || err.message || err.title || err.description)) ||
@@ -93,8 +144,8 @@ polarity.export = PolarityComponent.extend({
       .finally(() => {
         outerThis.get('block').notifyPropertyChange('data');
         setTimeout(() => {
-          outerThis.set('createMessage', '');
-          outerThis.set('createErrorMessage', '');
+          outerThis.set('createIncidentMessage', '');
+          outerThis.set('createIncidentErrorMessage', '');
           outerThis.get('block').notifyPropertyChange('data');
         }, 5000);
         resolve();
@@ -102,8 +153,8 @@ polarity.export = PolarityComponent.extend({
   },
   searchIndicatorTypes: function (term, resolve, reject) {
     const outerThis = this;
-    outerThis.set('createMessage', '');
-    outerThis.set('createErrorMessage', '');
+    outerThis.set('createIndicatorMessage', '');
+    outerThis.set('createIndicatorErrorMessage', '');
     outerThis.get('block').notifyPropertyChange('data');
 
     outerThis
@@ -118,7 +169,8 @@ polarity.export = PolarityComponent.extend({
         outerThis.set('foundIndicatorTypes', types);
       })
       .catch((err) => {
-        outerThis.set('createErrorMessage',
+        outerThis.set(
+          'createIndicatorErrorMessage',
           'Search Indicator Types Failed: ' +
             (err &&
               (err.detail || err.err || err.message || err.title || err.description)) ||
@@ -128,57 +180,57 @@ polarity.export = PolarityComponent.extend({
       .finally(() => {
         outerThis.get('block').notifyPropertyChange('data');
         setTimeout(() => {
-          outerThis.set('createMessage', '');
-          outerThis.set('createErrorMessage', '');
+          outerThis.set('createIndicatorMessage', '');
+          outerThis.set('createIndicatorErrorMessage', '');
           outerThis.get('block').notifyPropertyChange('data');
         }, 5000);
         resolve();
       });
   },
   actions: {
-    // TODO: Add boolean value toggling action functions here
+    changeTab: function (tabName) {
+      this.set('activeTab', tabName);
+    },
+
+    // Incident Actions
     searchIncidentTypes: function (term) {
       return new Ember.RSVP.Promise((resolve, reject) => {
         Ember.run.debounce(this, this.searchIncidentTypes, term, resolve, reject, 500);
       });
     },
-    searchIndicatorTypes: function (term) {
-      return new Ember.RSVP.Promise((resolve, reject) => {
-        Ember.run.debounce(this, this.searchIndicatorTypes, term, resolve, reject, 500);
-      });
+    initiateIncidentDeletion: function (entity) {
+      this.set('incidentIsDeleting', true);
+      this.set('incidentToDelete', entity);
     },
-    initiateItemDeletion: function (entity) {
-      this.set('isDeleting', true);
-      this.set('entityToDelete', entity);
+    cancelIncidentDeletion: function () {
+      this.set('incidentIsDeleting', false);
+      this.set('incidentToDelete', {});
     },
-    cancelItemDeletion: function () {
-      this.set('isDeleting', false);
-      this.set('entityToDelete', {});
-    },
-    confirmDelete: function () {
+    confirmIncidentDelete: function () {
       const outerThis = this;
-      outerThis.set('deleteMessage', '');
-      outerThis.set('deleteErrorMessage', '');
-      outerThis.set('deleteIsRunning', true);
+      outerThis.set('incidentDeleteMessage', '');
+      outerThis.set('incidentDeleteErrorMessage', '');
+      outerThis.set('incidentDeleteIsRunning', true);
       outerThis.get('block').notifyPropertyChange('data');
 
       outerThis
         .sendIntegrationMessage({
           data: {
-            action: 'DELETE_ITEM',
-            entity: outerThis.get('entityToDelete'),
-            newIocs: outerThis.get('newIocs'),
-            foundEntities: outerThis.get('foundEntities')
+            action: 'DELETE_INCIDENT',
+            entity: outerThis.get('incidentToDelete'),
+            newIncidentIocs: outerThis.get('newIncidentIocs'),
+            foundIncidentEntities: outerThis.get('foundIncidentEntities')
           }
         })
-        .then(({ newIocs, newList }) => {
-          outerThis.set('newIocs', newIocs);
-          outerThis.set('foundEntities', newList);
-          outerThis.set('deleteMessage', 'Successfully Deleted IOC');
+        .then(({ newIncidentIocs, newList, playbooks }) => {
+          outerThis.set('newIncidentIocs', newIncidentIocs);
+          outerThis.set('foundIncidentEntities', newList);
+          outerThis.set('playbooks', playbooks);
+          outerThis.set('incidentDeleteMessage', 'Successfully Deleted Incident');
         })
         .catch((err) => {
           outerThis.set(
-            'deleteErrorMessage',
+            'incidentDeleteErrorMessage',
             'Failed to Delete IOC: ' +
               (err &&
                 (err.detail || err.err || err.message || err.title || err.description)) ||
@@ -186,61 +238,70 @@ polarity.export = PolarityComponent.extend({
           );
         })
         .finally(() => {
-          this.set('isDeleting', false);
-          this.set('entityToDelete', {});
-          outerThis.set('deleteIsRunning', false);
+          this.set('incidentIsDeleting', false);
+          this.set('incidentToDelete', {});
+          outerThis.set('incidentDeleteIsRunning', false);
           outerThis.get('block').notifyPropertyChange('data');
           setTimeout(() => {
-            outerThis.set('deleteMessage', '');
-            outerThis.set('deleteErrorMessage', '');
+            outerThis.set('incidentDeleteMessage', '');
+            outerThis.set('incidentDeleteErrorMessage', '');
             outerThis.get('block').notifyPropertyChange('data');
           }, 5000);
         });
     },
-    removeAllSubmitItems: function () {
-      const allIOCs = this.get('newIocs').concat(this.get('newIocsToSubmit'));
+    removeAllSubmitIncidents: function () {
+      const allIOCs = this.get('newIncidentIocs').concat(
+        this.get('newIncidentIocsToSubmit')
+      );
 
-      this.set('newIocs', allIOCs);
-      this.set('newIocsToSubmit', []);
+      this.set('newIncidentIocs', allIOCs);
+      this.set('newIncidentIocsToSubmit', []);
 
       this.get('block').notifyPropertyChange('data');
     },
-    addAllSubmitItems: function () {
-      const allIOCs = this.get('newIocs').concat(this.get('newIocsToSubmit'));
+    addAllSubmitIncidents: function () {
+      const allIOCs = this.get('newIncidentIocs').concat(
+        this.get('newIncidentIocsToSubmit')
+      );
 
-      this.set('newIocs', []);
-      this.set('newIocsToSubmit', allIOCs);
+      this.set('newIncidentIocs', []);
+      this.set('newIncidentIocsToSubmit', allIOCs);
       this.get('block').notifyPropertyChange('data');
     },
-    removeSubmitItem: function (entity) {
-      this.set('newIocs', this.get('newIocs').concat(entity));
+    removeSubmitIncident: function (entity) {
+      this.set('newIncidentIocs', this.get('newIncidentIocs').concat(entity));
 
       this.set(
-        'newIocsToSubmit',
-        this.get('newIocsToSubmit').filter(({ value }) => value !== entity.value)
+        'newIncidentIocsToSubmit',
+        this.get('newIncidentIocsToSubmit').filter(({ value }) => value !== entity.value)
       );
 
       this.get('block').notifyPropertyChange('data');
     },
-    addSubmitItem: function (entity) {
+    addSubmitIncident: function (entity) {
       this.set(
-        'newIocs',
-        this.get('newIocs').filter(({ value }) => value !== entity.value)
+        'newIncidentIocs',
+        this.get('newIncidentIocs').filter(({ value }) => value !== entity.value)
       );
-      const updatedNewIocsToSubmit = this.get('newIocsToSubmit').concat(entity);
+      const updatedNewIncidentIocsToSubmit = this.get('newIncidentIocsToSubmit').concat(
+        entity
+      );
 
-      this.set('newIocsToSubmit', updatedNewIocsToSubmit);
+      this.set('newIncidentIocsToSubmit', updatedNewIncidentIocsToSubmit);
 
       this.get('block').notifyPropertyChange('data');
     },
-    submitItems: function () {
+    submitIncidents: function () {
       const outerThis = this;
       const possibleParamErrors = [
         {
-          condition: () => !outerThis.get('newIocsToSubmit').length,
+          condition: () => !outerThis.get('newIncidentIocsToSubmit').length,
           message: 'No Items to Submit...'
+        },
+        {
+          condition: () => !outerThis.get('selectedIncidentType'),
+          message: 'Incident Type Required'
         }
-        // TODO: add other initially evaluatable error conditions and messages here
       ];
 
       const paramErrorMessages = possibleParamErrors.reduce(
@@ -250,55 +311,221 @@ polarity.export = PolarityComponent.extend({
       );
 
       if (paramErrorMessages.length) {
-        outerThis.set('createErrorMessage', paramErrorMessages[0]);
+        outerThis.set('createIncidentErrorMessage', paramErrorMessages[0]);
         outerThis.get('block').notifyPropertyChange('data');
         setTimeout(() => {
-          outerThis.set('createErrorMessage', '');
+          outerThis.set('createIncidentErrorMessage', '');
           outerThis.get('block').notifyPropertyChange('data');
         }, 5000);
         return;
       }
 
-      outerThis.set('createMessage', '');
-      outerThis.set('createErrorMessage', '');
-      outerThis.set('createIsRunning', true);
+      outerThis.set('createIncidentMessage', '');
+      outerThis.set('createIncidentErrorMessage', '');
+      outerThis.set('createIncidentsIsRunning', true);
       outerThis.get('block').notifyPropertyChange('data');
       outerThis
         .sendIntegrationMessage({
           data: {
-            action: 'SUBMIT_ITEMS',
-            newIocsToSubmit: outerThis.get('newIocsToSubmit'),
-            foundEntities: outerThis.get('foundEntities'),
-            summary: this.get('summary'),
-            reputation: this.get('reputation'),
-            indicatorComment: this.get('indicatorComment'),
-            selectedIndicatorType: this.get('selectedIndicatorType')
+            action: 'SUBMIT_INCIDENTS',
+            newIncidentIocsToSubmit: outerThis.get('newIncidentIocsToSubmit'),
+            foundIncidentEntities: outerThis.get('foundIncidentEntities'),
+            newIncidentIocs: outerThis.get('newIncidentIocs'),
+            submissionDetails: this.get('submissionDetails'),
+            selectedIncidentType: this.get('selectedIncidentType'),
+            severity: this.get('severity'),
+            newIncidentPlaybookId: this.get('newIncidentPlaybookId')
           }
         })
-        .then(({ foundEntities }) => {
-          outerThis.set('foundEntities', foundEntities);
-          outerThis.set('newIocsToSubmit', []);
-          outerThis.set('createMessage', 'Successfully Created IOCs');
+        .then(({ foundIncidentEntities, playbooks }) => {
+          outerThis.set('foundIncidentEntities', foundIncidentEntities);
+          outerThis.set('playbooks', playbooks);
+          outerThis.set('newIncidentIocsToSubmit', []);
+          outerThis.set('createIncidentMessage', 'Successfully Created IOCs');
         })
         .catch((err) => {
           outerThis.set(
-            'createErrorMessage',
+            'createIncidentErrorMessage',
             'Failed to Create IOC: ' +
               (err && (err.detail || err.message || err.title || err.description)) ||
               'Unknown Reason'
           );
         })
         .finally(() => {
-          outerThis.set('createIsRunning', false);
+          outerThis.set('createIncidentsIsRunning', false);
           outerThis.get('block').notifyPropertyChange('data');
           setTimeout(() => {
-            outerThis.set('createMessage', '');
-            outerThis.set('createErrorMessage', '');
+            outerThis.set('createIncidentMessage', '');
+            outerThis.set('createIncidentErrorMessage', '');
+            outerThis.get('block').notifyPropertyChange('data');
+          }, 5000);
+        });
+    },
+
+    // Indicator Actions
+    searchIndicatorTypes: function (term) {
+      return new Ember.RSVP.Promise((resolve, reject) => {
+        Ember.run.debounce(this, this.searchIndicatorTypes, term, resolve, reject, 500);
+      });
+    },
+    initiateIndicatorDeletion: function (entity) {
+      this.set('indicatorIsDeleting', true);
+      this.set('indicatorToDelete', entity);
+    },
+    cancelIndicatorDeletion: function () {
+      this.set('indicatorIsDeleting', false);
+      this.set('indicatorToDelete', {});
+    },
+    confirmIndicatorDelete: function () {
+      const outerThis = this;
+      outerThis.set('indicatorDeleteMessage', '');
+      outerThis.set('indicatorDeleteErrorMessage', '');
+      outerThis.set('indicatorDeleteIsRunning', true);
+      outerThis.get('block').notifyPropertyChange('data');
+
+      outerThis
+        .sendIntegrationMessage({
+          data: {
+            action: 'DELETE_INDICATOR',
+            entity: outerThis.get('indicatorToDelete'),
+            newIndicatorIocs: outerThis.get('newIndicatorIocs'),
+            foundIndicatorEntities: outerThis.get('foundIndicatorEntities')
+          }
+        })
+        .then(({ newIndicatorIocs, newList }) => {
+          outerThis.set('newIndicatorIocs', newIndicatorIocs);
+          outerThis.set('foundIndicatorEntities', newList);
+          outerThis.set('indicatorDeleteMessage', 'Successfully Deleted Indicator');
+        })
+        .catch((err) => {
+          outerThis.set(
+            'indicatorDeleteErrorMessage',
+            'Failed to Delete IOC: ' +
+              (err &&
+                (err.detail || err.err || err.message || err.title || err.description)) ||
+              'Unknown Reason'
+          );
+        })
+        .finally(() => {
+          this.set('indicatorIsDeleting', false);
+          this.set('indicatorToDelete', {});
+          outerThis.set('indicatorDeleteIsRunning', false);
+          outerThis.get('block').notifyPropertyChange('data');
+          setTimeout(() => {
+            outerThis.set('indicatorDeleteMessage', '');
+            outerThis.set('indicatorDeleteErrorMessage', '');
+            outerThis.get('block').notifyPropertyChange('data');
+          }, 5000);
+        });
+    },
+    removeAllSubmitIndicators: function () {
+      const allIOCs = this.get('newIndicatorIocs').concat(
+        this.get('newIndicatorIocsToSubmit')
+      );
+
+      this.set('newIndicatorIocs', allIOCs);
+      this.set('newIndicatorIocsToSubmit', []);
+
+      this.get('block').notifyPropertyChange('data');
+    },
+    addAllSubmitIndicators: function () {
+      const allIOCs = this.get('newIndicatorIocs').concat(
+        this.get('newIndicatorIocsToSubmit')
+      );
+
+      this.set('newIndicatorIocs', []);
+      this.set('newIndicatorIocsToSubmit', allIOCs);
+      this.get('block').notifyPropertyChange('data');
+    },
+    removeSubmitIndicator: function (entity) {
+      this.set('newIndicatorIocs', this.get('newIndicatorIocs').concat(entity));
+
+      this.set(
+        'newIndicatorIocsToSubmit',
+        this.get('newIndicatorIocsToSubmit').filter(({ value }) => value !== entity.value)
+      );
+
+      this.get('block').notifyPropertyChange('data');
+    },
+    addSubmitIndicator: function (entity) {
+      this.set(
+        'newIndicatorIocs',
+        this.get('newIndicatorIocs').filter(({ value }) => value !== entity.value)
+      );
+      const updatedNewIndicatorIocsToSubmit = this.get('newIndicatorIocsToSubmit').concat(
+        entity
+      );
+
+      this.set('newIndicatorIocsToSubmit', updatedNewIndicatorIocsToSubmit);
+
+      this.get('block').notifyPropertyChange('data');
+    },
+    submitIndicators: function () {
+      const outerThis = this;
+      const possibleParamErrors = [
+        {
+          condition: () => !outerThis.get('newIndicatorIocsToSubmit').length,
+          message: 'No Items to Submit...'
+        },
+        {
+          condition: () => !outerThis.get('selectedIndicatorType'),
+          message: 'Indicator Type Required'
+        }
+      ];
+
+      const paramErrorMessages = possibleParamErrors.reduce(
+        (agg, possibleParamError) =>
+          possibleParamError.condition() ? agg.concat(possibleParamError.message) : agg,
+        []
+      );
+
+      if (paramErrorMessages.length) {
+        outerThis.set('createIndicatorErrorMessage', paramErrorMessages[0]);
+        outerThis.get('block').notifyPropertyChange('data');
+        setTimeout(() => {
+          outerThis.set('createIndicatorErrorMessage', '');
+          outerThis.get('block').notifyPropertyChange('data');
+        }, 5000);
+        return;
+      }
+
+      outerThis.set('createIndicatorMessage', '');
+      outerThis.set('createIndicatorErrorMessage', '');
+      outerThis.set('createIndicatorsIsRunning', true);
+      outerThis.get('block').notifyPropertyChange('data');
+      outerThis
+        .sendIntegrationMessage({
+          data: {
+            action: 'SUBMIT_INDICATORS',
+            newIndicatorIocsToSubmit: outerThis.get('newIndicatorIocsToSubmit'),
+            foundIndicatorEntities: outerThis.get('foundIndicatorEntities'),
+            reputation: this.get('reputation'),
+            indicatorComment: this.get('indicatorComment'),
+            selectedIndicatorType: this.get('selectedIndicatorType')
+          }
+        })
+        .then(({ foundIndicatorEntities }) => {
+          outerThis.set('foundIndicatorEntities', foundIndicatorEntities);
+          outerThis.set('newIndicatorIocsToSubmit', []);
+          outerThis.set('createIndicatorMessage', 'Successfully Created IOCs');
+        })
+        .catch((err) => {
+          outerThis.set(
+            'createIndicatorErrorMessage',
+            'Failed to Create IOC: ' +
+              (err && (err.detail || err.message || err.title || err.description)) ||
+              'Unknown Reason'
+          );
+        })
+        .finally(() => {
+          outerThis.set('createIndicatorsIsRunning', false);
+          outerThis.get('block').notifyPropertyChange('data');
+          setTimeout(() => {
+            outerThis.set('createIndicatorMessage', '');
+            outerThis.set('createIndicatorErrorMessage', '');
             outerThis.get('block').notifyPropertyChange('data');
           }, 5000);
         });
     }
-
-    // TODO: Add logic based action functions here
   }
 });

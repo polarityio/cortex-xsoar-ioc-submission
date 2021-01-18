@@ -1,22 +1,37 @@
 const fp = require('lodash/fp');
 const { ENTITY_DISPLAY_TYPES } = require('./constants');
+const getPlaybooksByEntityGroup = require('./getPlaybooksByEntityGroup');
 
 let maxUniqueKeyNumber = 0;
 
-const createLookupResults = (
+const createLookupResults = async (
   entities,
+  _foundIncidentEntities,
   _foundIndicatorEntities,
-  entityGroupsWithPlaybooks,
+  requestWithDefaults,
   options,
   Logger
 ) => {
-  const foundIndicatorEntities = getFoundEntities(_foundIndicatorEntities, entities);
-
+  const foundIndicatorEntities = getFoundEntities(_foundIndicatorEntities, entities, 'value');
   const notFoundIndicatorEntities = getNotFoundEntities(foundIndicatorEntities, entities);
+
+  const foundIncidentEntities = getFoundEntities(_foundIncidentEntities, entities, 'name');
+  const notFoundIncidentEntities = getNotFoundEntities(foundIncidentEntities, entities);
+
+
+  const entityGroupsWithPlaybooks = await getPlaybooksByEntityGroup(
+    notFoundIncidentEntities,
+    options,
+    requestWithDefaults,
+    Logger
+  );
 
   const summary = [
     ...(foundIndicatorEntities.length ? ['Indicators Found'] : []),
-    ...(notFoundIndicatorEntities.length ? ['New Entities'] : [])
+    ...(foundIncidentEntities.length ? ['Incidents Found'] : []),
+    ...(notFoundIndicatorEntities.length || notFoundIncidentEntities.length
+      ? ['New Entities']
+      : [])
   ];
   maxUniqueKeyNumber++;
 
@@ -33,26 +48,34 @@ const createLookupResults = (
           url: `${options.url}/#`,
           maxUniqueKeyNumber,
           [`summary${maxUniqueKeyNumber}`]: summary,
-          [`foundEntities${maxUniqueKeyNumber}`]: foundIndicatorEntities,
-          [`notFoundEntities${maxUniqueKeyNumber}`]: notFoundIndicatorEntities
+          [`foundIndicatorEntities${maxUniqueKeyNumber}`]: foundIndicatorEntities,
+          [`notFoundIndicatorEntities${maxUniqueKeyNumber}`]: notFoundIndicatorEntities,
+          [`foundIncidentEntities${maxUniqueKeyNumber}`]: foundIncidentEntities,
+          [`notFoundIncidentEntities${maxUniqueKeyNumber}`]: notFoundIncidentEntities,
+          [`playbooks${maxUniqueKeyNumber}`]: entityGroupsWithPlaybooks
         }
       }
     }
   ];
 };
 
-const getFoundEntities = (_foundEntities, entities) =>
+const getFoundEntities = (_foundEntities, entities, comparisonKey) =>
   fp.flow(
-    fp.filter(({ value }) =>
-      fp.any(({ value: _value }) => fp.toLower(value) === fp.toLower(_value), entities)
+    fp.filter((foundEntity) =>
+      fp.any(({ value }) => fp.toLower(value) === fp.toLower(foundEntity[comparisonKey]), entities)
     ),
-    fp.map((foundEntity) => ({
-      ...foundEntity,
-      displayedType: fp.flow(
-        fp.find(({ value }) => fp.toLower(value) === fp.toLower(foundEntity.value)),
-        getDisplayType
-      )(entities)
-    }))
+    fp.map((foundEntity) => {
+      const lookupEntity = fp.find(
+        ({ value }) => fp.toLower(value) === fp.toLower(foundEntity[comparisonKey]),
+        entities
+      );
+
+      return {
+        ...lookupEntity,
+        ...foundEntity,
+        displayedType: getDisplayType(lookupEntity)
+      };
+    })
   )(_foundEntities);
 
 const getNotFoundEntities = (foundEntities, entities) =>

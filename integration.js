@@ -2,11 +2,12 @@
 
 const validateOptions = require('./src/validateOptions');
 const createRequestWithDefaults = require('./src/createRequestWithDefaults');
-const searchTags = require('./src/searchTags');
-const deleteItem = require('./src/deleteItem');
+const createIncidents = require('./src/createIncidents');
+const deleteIncident = require('./src/deleteIncident');
+const createIndicators = require('./src/createIndicators');
+const deleteIndicator = require('./src/deleteIndicator');
 const searchIndicatorTypes = require('./src/searchIndicatorTypes');
 const searchIncidentTypes = require('./src/searchIncidentTypes');
-const createIndicators = require('./src/createIndicators');
 
 const { handleError } = require('./src/handleError');
 const { getLookupResults } = require('./src/getLookupResults');
@@ -44,9 +45,10 @@ const doLookup = async (entities, { url, ..._options }, cb) => {
 };
 
 const getOnMessage = {
-  DELETE_ITEM: deleteItem,
-  SUBMIT_ITEMS: createIndicators,
-  SEARCH_TAGS: searchTags,
+  DELETE_INCIDENT: deleteIncident,
+  SUBMIT_INCIDENTS: createIncidents,
+  DELETE_INDICATOR: deleteIndicator,
+  SUBMIT_INDICATORS: createIndicators,
   SEARCH_INDICATOR_TYPES: searchIndicatorTypes,
   SEARCH_INCIDENT_TYPES: searchIncidentTypes
 };

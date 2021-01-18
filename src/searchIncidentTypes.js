@@ -11,6 +11,7 @@ const searchIncidentTypes = async (
     const types = fp.flow(
       fp.getOr([], 'body'),
       searchByTerm(term, selectedIncidentType),
+      fp.filter(fp.negate(fp.get('disabled'))),
       fp.sortBy('name'),
       fp.slice(0, 50)
     )(

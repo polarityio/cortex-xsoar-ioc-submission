@@ -2,7 +2,13 @@ const fp = require('lodash/fp');
 const { ENTITY_DISPLAY_TYPES, INDICATOR_TYPE_DEFAULTS } = require('./constants');
 
 const createIndicators = async (
-  { newIocsToSubmit, foundEntities, indicatorComment, reputation, selectedIndicatorType },
+  {
+    newIndicatorIocsToSubmit,
+    foundIndicatorEntities,
+    indicatorComment,
+    reputation,
+    selectedIndicatorType
+  },
   requestWithDefaults,
   options,
   Logger,
@@ -10,7 +16,7 @@ const createIndicators = async (
 ) => {
   try {
     const createdItems = await createItems(
-      newIocsToSubmit,
+      newIndicatorIocsToSubmit,
       indicatorComment,
       reputation,
       selectedIndicatorType,
@@ -20,7 +26,7 @@ const createIndicators = async (
     );
 
     return callback(null, {
-      foundEntities: [...createdItems, ...foundEntities]
+      foundIndicatorEntities: [...createdItems, ...foundIndicatorEntities]
     });
   } catch (error) {
     Logger.error(
@@ -40,7 +46,7 @@ const createIndicators = async (
 };
 
 const createItems = async (
-  newIocsToSubmit,
+  newIndicatorIocsToSubmit,
   indicatorComment,
   reputation,
   selectedIndicatorType,
@@ -61,17 +67,17 @@ const createItems = async (
             options,
             requestWithDefaults
           ),
-        newIocsToSubmit
+        newIndicatorIocsToSubmit
       )
     )
   );
-
+  
   return fp.map((createdEntity) => ({
     ...createdEntity,
     displayedType: fp.flow(
       fp.find(({ value }) => fp.toLower(value) === fp.toLower(createdEntity.value)),
       _getDisplayType
-    )(newIocsToSubmit)
+    )(newIndicatorIocsToSubmit)
   }))(newlyCreatedIndicators);
 };
 

@@ -1,7 +1,7 @@
 const fp = require('lodash/fp');
 
-const deleteItem = async (
-  { entity, newIocs, foundEntities },
+const deleteIndicator = async (
+  { entity, newIndicatorIocs, foundIndicatorEntities },
   requestWithDefaults,
   options,
   Logger,
@@ -37,9 +37,9 @@ const deleteItem = async (
   }
 
   return callback(null, {
-    newList: fp.filter(({ value }) => value !== entity.value, foundEntities),
-    newIocs: [entity, ...newIocs]
+    newList: fp.filter(({ value }) => value !== entity.value, foundIndicatorEntities),
+    newIndicatorIocs: [entity, ...newIndicatorIocs]
   });
 };
 
-module.exports = deleteItem;
+module.exports = deleteIndicator;

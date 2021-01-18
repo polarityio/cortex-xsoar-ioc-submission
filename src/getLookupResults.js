@@ -2,14 +2,13 @@ const fp = require('lodash/fp');
 
 const { splitOutIgnoredIps } = require('./dataTransformations');
 const createLookupResults = require('./createLookupResults');
-const getPlaybooksByEntityGroup = require('./getPlaybooksByEntityGroup');
 const queryIncidents = require('./queryIncidents');
 const queryIndicators = require('./queryIndicators');
 
 const getLookupResults = async (entities, options, requestWithDefaults, Logger) => {
   const { entitiesPartition, ignoredIpLookupResults } = splitOutIgnoredIps(entities);
 
-  const entityGroupsWithPlaybooks = await getPlaybooksByEntityGroup(
+  const foundIncidentEntities = await queryIncidents(
     entitiesPartition,
     options,
     requestWithDefaults,
@@ -23,16 +22,17 @@ const getLookupResults = async (entities, options, requestWithDefaults, Logger) 
     Logger
   );
 
-  const lookupResults = createLookupResults(
+  const lookupResults = await createLookupResults(
     entitiesPartition,
+    foundIncidentEntities,
     foundIndicatorEntities,
-    entityGroupsWithPlaybooks,
+    requestWithDefaults,
     options,
     Logger
   );
 
   Logger.trace(
-    { lookupResults, foundIndicatorEntities, entityGroupsWithPlaybooks },
+    { lookupResults, foundIndicatorEntities },
     'Lookup Results'
   );
 

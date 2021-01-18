@@ -11,7 +11,7 @@ const getPlaybooksByEntityGroup = (
   _P
     .chain(entitiesPartition)
     .groupBy(_getEntityType)
-    .reduce(_getPlaybooksForEntityType(options, Logger, requestWithDefaults), {})
+    .reduce(_getPlaybooksForEntityType(options, Logger, requestWithDefaults), [])
     .value();
 
 const _getEntityType = ({ isIP, isHash, isDomain, isEmail }) =>
@@ -40,13 +40,32 @@ const _getPlaybooksForEntityType = (options, Logger, requestWithDefaults) => asy
       throw error;
     });
 
-  return {
+  const unorganizedPlaybooks = [
     ...agg,
-    [keyEntityType]: {
-      entities: valueEntities,
-      playbooks: fp.filter((playbook) => !playbook.hidden, playbooks)
+    ...fp.flow(
+      fp.filter((playbook) => !playbook.hidden),
+      fp.map((playbook) => ({
+        ...playbook,
+        keyEntityType,
+        name: `(${keyEntityType}) ${playbook.name}`
+      }))
+    )(playbooks)
+  ];
+
+  return fp.flow(
+    fp.groupBy('keyEntityType'),
+    fp.mapValues(fp.sortBy('name')),
+    (playbooksByType) => {
+      const get = (key) => fp.get(key, playbooksByType);
+      return fp.flow(
+        fp.concat(get('hash')),
+        fp.concat(get('email')),
+        fp.concat(get('domain')),
+        fp.concat(get('ip')),
+        fp.compact
+      )([]);
     }
-  };
+  )(unorganizedPlaybooks);
 };
 
 module.exports = getPlaybooksByEntityGroup;

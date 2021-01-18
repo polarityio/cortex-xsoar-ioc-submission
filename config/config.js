@@ -32,10 +32,9 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'trace' //trace, debug, info, warn, error, fatal
+    level: 'info' //trace, debug, info, warn, error, fatal
   },
   options: [
-    // TODO: Add other options as needed
     {
       key: 'url',
       name: 'Cortex XSOAR URL',
