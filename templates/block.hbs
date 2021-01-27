@@ -242,13 +242,13 @@
 
         <div class="select-container">
           <span class="p-value">Details: </span>
-          <input
-            type="text"
+          {{textarea
             class="w-100"
+            rows=2
             placeholder="Incident Details"
-            onchange={{action (mut submissionDetails) value="target.value"}}
-            value={{submissionDetails}}
-          />
+            value=submissionDetails
+            disabled=interactionDisabled
+          }}
         </div>
 
         <div class="select-container">
@@ -308,7 +308,7 @@
         <button {{action "submitIncidents"}}
                 disabled={{interactionDisabled}}
                 class="p-btn btn btn-secondary m-0">
-          {{#if createIndicatorsIsRunning}}
+          {{#if createIncidentsIsRunning}}
             {{fa-icon "spinner-third" fixedWidth=true spin=true}}
           {{else}}
             Submit Incidents
