@@ -11,7 +11,7 @@ The Polarity Cortex XSOAR IOC Submission integration allows Polarity to search y
 
 ### Cortex XSOAR Instance URL
 
-The base URL for the Cortex XSOAR API which should include the schema (i.e., https://)
+The base URL for the Cortex XSOAR API which should include the protocol (i.e., https://)
 
 ### API Key
 

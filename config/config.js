@@ -39,7 +39,7 @@ module.exports = {
       key: 'url',
       name: 'Cortex XSOAR URL',
       description:
-        'The base URL for the Cortex XSOAR API which should include the schema (i.e., https://)',
+        'The base URL for the Cortex XSOAR API which should include the protocol (i.e., https://)',
       default: '',
       type: 'text',
       userCanEdit: true,
@@ -59,20 +59,20 @@ module.exports = {
       key: 'allowIndicatorDelete',
       name: 'Allow Indicator Deletion',
       description:
-        'If checked, users will be able to delete Indicators from Cortex XSOAR.',
+        'If checked, users will be able to delete Indicators from Cortex XSOAR. (this setting must be set to `User can view only`).',
       default: false,
       type: 'boolean',
-      userCanEdit: true,
+      userCanEdit: false,
       adminOnly: false
     },
     {
       key: 'allowIncidentDelete',
       name: 'Allow Incident Deletion',
       description:
-        'If checked, users will be able to delete Incidents from Cortex XSOAR.',
+        'If checked, users will be able to delete Incidents from Cortex XSOAR. (this setting must be set to `User can view only`).',
       default: false,
       type: 'boolean',
-      userCanEdit: true,
+      userCanEdit: false,
       adminOnly: false
     }
   ]
