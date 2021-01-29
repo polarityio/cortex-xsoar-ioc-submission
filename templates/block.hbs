@@ -596,13 +596,13 @@
         
         <div class="select-container last">
           <span class="p-value">Add a Comment: </span>
-          <input
-            type="text"
+          {{textarea
             class="w-100"
+            rows=2
             placeholder="Polarity Indicator Comment"
-            onchange={{action (mut indicatorComment) value="target.value"}}
-            value={{indicatorComment}}
-          />
+            value=indicatorComment
+            disabled=interactionDisabled
+          }}
         </div>
       </div>
 
