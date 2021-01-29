@@ -1,21 +1,37 @@
 const fp = require('lodash/fp');
 const { ENTITY_DISPLAY_TYPES } = require('./constants');
+const getPlaybooksByEntityGroup = require('./getPlaybooksByEntityGroup');
 
 let maxUniqueKeyNumber = 0;
 
-const createLookupResults = (
-  options,
+const createLookupResults = async (
   entities,
-  _foundEntities,
+  _foundIncidentEntities,
+  _foundIndicatorEntities,
+  requestWithDefaults,
+  options,
   Logger
 ) => {
-  const foundEntities = getFoundEntities(_foundEntities, entities);
+  const foundIndicatorEntities = getFoundEntities(_foundIndicatorEntities, entities, 'value');
+  const notFoundIndicatorEntities = getNotFoundEntities(foundIndicatorEntities, entities);
 
-  const notFoundEntities = getNotFoundEntities(foundEntities, entities);
+  const foundIncidentEntities = getFoundEntities(_foundIncidentEntities, entities, 'name');
+  const notFoundIncidentEntities = getNotFoundEntities(foundIncidentEntities, entities);
+
+
+  const entityGroupsWithPlaybooks = await getPlaybooksByEntityGroup(
+    notFoundIncidentEntities,
+    options,
+    requestWithDefaults,
+    Logger
+  );
 
   const summary = [
-    ...(foundEntities.length ? ['Entities Found'] : []),
-    ...(notFoundEntities.length ? ['New Entites'] : [])
+    ...(foundIndicatorEntities.length ? ['Indicators Found'] : []),
+    ...(foundIncidentEntities.length ? ['Incidents Found'] : []),
+    ...(notFoundIndicatorEntities.length || notFoundIncidentEntities.length
+      ? ['New Entities']
+      : [])
   ];
   maxUniqueKeyNumber++;
 
@@ -23,32 +39,43 @@ const createLookupResults = (
     {
       entity: {
         ...entities[0],
-        value: '___ IOC Submission'
+        value: 'Cortex XSOAR IOC Submission'
       },
       isVolatile: true,
       data: {
         summary,
         details: {
-          url: options.url,
+          url: `${options.url}/#`,
           maxUniqueKeyNumber,
           [`summary${maxUniqueKeyNumber}`]: summary,
-          [`foundEntities${maxUniqueKeyNumber}`]: foundEntities,
-          [`notFoundEntities${maxUniqueKeyNumber}`]: notFoundEntities
+          [`foundIndicatorEntities${maxUniqueKeyNumber}`]: foundIndicatorEntities,
+          [`notFoundIndicatorEntities${maxUniqueKeyNumber}`]: notFoundIndicatorEntities,
+          [`foundIncidentEntities${maxUniqueKeyNumber}`]: foundIncidentEntities,
+          [`notFoundIncidentEntities${maxUniqueKeyNumber}`]: notFoundIncidentEntities,
+          [`playbooks${maxUniqueKeyNumber}`]: entityGroupsWithPlaybooks
         }
       }
     }
   ];
 };
 
-const getFoundEntities = (_foundEntities, entities) =>
+const getFoundEntities = (_foundEntities, entities, comparisonKey) =>
   fp.flow(
-    fp.filter(({ value }) =>
-      fp.any(({ value: _value }) => fp.toLower(value) === fp.toLower(_value), entities)
+    fp.filter((foundEntity) =>
+      fp.any(({ value }) => fp.toLower(value) === fp.toLower(foundEntity[comparisonKey]), entities)
     ),
-    fp.map((foundEntity) => ({
-      ...foundEntity,
-      displayedType: ENTITY_DISPLAY_TYPES[foundEntity.type]
-    }))
+    fp.map((foundEntity) => {
+      const lookupEntity = fp.find(
+        ({ value }) => fp.toLower(value) === fp.toLower(foundEntity[comparisonKey]),
+        entities
+      );
+
+      return {
+        ...lookupEntity,
+        ...foundEntity,
+        displayedType: getDisplayType(lookupEntity)
+      };
+    })
   )(_foundEntities);
 
 const getNotFoundEntities = (foundEntities, entities) =>
@@ -60,11 +87,19 @@ const getNotFoundEntities = (foundEntities, entities) =>
       )
         ? agg.concat({
             ...entity,
-            displayedType: ENTITY_DISPLAY_TYPES[entity.type]
+            displayedType: getDisplayType(entity)
           })
         : agg,
     [],
     entities
+  );
+
+const getDisplayType = (entity) =>
+  fp.get(
+    fp.get('isHash', entity)
+      ? fp.get('hashType', entity)
+      : fp.get('type', entity),
+    ENTITY_DISPLAY_TYPES
   );
 
 module.exports = createLookupResults;

@@ -1,9 +1,9 @@
 module.exports = {
-  name: '___ IOC Submission',
-  acronym: '___+', // TODO: This will need to be the same acronym as the original integration, if we have one, and a '+' at the end
+  name: 'Cortex XSOAR IOC Submission',
+  acronym: 'CX+',
   description:
-    'Polarity integration that connects to the ___ threat intelligence platform using the IOC Submission interface format.',
-  entityTypes: ['domain', 'IPv4', 'IPv6', 'email', 'MD5', 'SHA1', 'SHA256'],
+    'Polarity integration that connects to the Cortex XSOAR threat intelligence platform using the IOC Submission interface format.',
+  entityTypes: ['IPv4', 'IPv6', 'hash', 'domain', 'email'],
   styles: ['./styles/styles.less'],
   block: {
     component: {
@@ -22,6 +22,7 @@ module.exports = {
     }
   },
   onDemandOnly: true,
+  defaultColor: 'light-purple',
   request: {
     cert: '',
     key: '',
@@ -34,12 +35,11 @@ module.exports = {
     level: 'info' //trace, debug, info, warn, error, fatal
   },
   options: [
-    // TODO: Add other options as needed
     {
       key: 'url',
-      name: '___ URL',
+      name: 'Cortex XSOAR URL',
       description:
-        'URL of your ___ instance to include the schema (i.e., https://) and port if applicable',
+        'The base URL for the Cortex XSOAR API which should include the protocol (i.e., https://)',
       default: '',
       type: 'text',
       userCanEdit: true,
@@ -48,19 +48,31 @@ module.exports = {
     {
       key: 'apiKey',
       name: 'API Key',
-      description: 'The API (secret) Key associated with the provided Access ID',
+      description:
+        'A valid Cortex XSOAR API Key which can be found in your Cortex XSOAR Dashboard Settings',
       default: '',
       type: 'password',
       userCanEdit: false,
       adminOnly: true
     },
     {
-      key: 'allowDelete',
-      name: 'Allow IOC Deletion',
-      description: 'If checked, users will be able to delete indicators from ___.',
+      key: 'allowIndicatorDelete',
+      name: 'Allow Indicator Deletion',
+      description:
+        'If checked, users will be able to delete Indicators from Cortex XSOAR. (this setting must be set to `User can view only`).',
       default: false,
       type: 'boolean',
-      userCanEdit: true,
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
+      key: 'allowIncidentDelete',
+      name: 'Allow Incident Deletion',
+      description:
+        'If checked, users will be able to delete Incidents from Cortex XSOAR. (this setting must be set to `User can view only`).',
+      default: false,
+      type: 'boolean',
+      userCanEdit: false,
       adminOnly: false
     }
   ]
