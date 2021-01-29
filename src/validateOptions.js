@@ -3,9 +3,8 @@ const reduce = require('lodash/fp/reduce').convert({ cap: false });
 
 const validateOptions = (options, callback) => {
   const stringOptionsErrorMessages = {
-    url: 'You must provide a valid URL from your ThreatConnect Account',
-    apiKey: 'You must provide a valid API Key from your ThreatConnect Account'
-    // TODO: Add new keys and message here as needed
+    url: 'You must provide a valid URL from your Cortex XSOAR Account',
+    apiKey: 'You must provide a valid API Key from your Cortex XSOAR Account'
   };
 
   const stringValidationErrors = _validateStringOptions(
@@ -15,7 +14,6 @@ const validateOptions = (options, callback) => {
 
   const urlValidationError = _validateUrlOption(options.url);
 
-  // TODO: add any other valitation for Polarity Options needed here
   callback(null, stringValidationErrors.concat(urlValidationError));
 };
 

@@ -1,300 +1,639 @@
-<div class={{if (and (not (or newIocs.length newIocsToSubmit.length)) interactionDisabled) "modal-open"}}>
-  {{#if foundEntities.length}}
-    <h1 class="p-title">
-      {{fa-icon "info-circle" size="sm"}} Already In ___
-    </h1>
-    {{#if isDeleting}}
-      <div class="ioc-deletion-modal">
-        <div class="note">
-          <span class="p-key">
-            <span class="p-value"><em><b>DANGER:</b></em></span>
-            <div>
-              <span>Deleting an indicator cannot be undone and will remove all data for the indicator in ___.</span>
+<ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a {{action "changeTab" "incidents"}} class="nav-link {{if (or (eq activeTab "incidents")(not activeTab)) "active"}}" href="#">
+      {{fa-icon "bomb" size="md"}} Incidents
+    </a>
+  </li>
+  <li class="nav-item">
+    <a {{action "changeTab" "indicators"}} class="nav-link {{if (eq activeTab "indicators") "active"}}" href="#">
+      {{fa-icon "map-signs" size="md"}} Indicators
+    </a>
+  </li>
+</ul>
+{{#if (eq activeTab "incidents")}}
+  <div class={{if (and (not (or newIncidentIocs.length newIncidentIocsToSubmit.length)) interactionDisabled) "modal-open"}}>
+    {{#if foundIncidentEntities.length}}
+      <h1 class="p-title">
+        {{fa-icon "info-circle" size="sm"}} Already In Cortex XSOAR
+      </h1>
+      {{#if incidentIsDeleting}}
+        <div class="ioc-deletion-modal">
+          <div class="note">
+            <span class="p-key">
+              <span class="p-value"><em><b>DANGER! Incident will be lost forever:</b></em></span>
+              <div>
+                <span>
+                  Are you sure? Deleting an incident will also delete all incident related content 
+                  (investigation, attachment, artifacts, entries...) from Cortex XSOAR.
+                </span>
+              </div>
+              <div>
+                <span>Are you sure you want to delete the incident <em><b>{{incidentToDelete.value}}</b></em>?</span>
+              </div>
+            </span>
+            <div class="delete-confirmation-button">
+              <button 
+                class="cancel-delete" 
+                {{action "cancelIncidentDeletion"}} 
+                disabled={{incidentDeleteIsRunning}}
+              >
+                Cancel
+              </button>
+              <button 
+                class="p-btn btn btn-danger m-0" 
+                {{action "confirmIncidentDelete"}} 
+                disabled={{incidentDeleteIsRunning}}
+              >
+                Delete
+              </button>
             </div>
-            <div>
-              <span>Are you sure you want to delete the indicator <em><b>{{entityToDelete.value}}</b></em>?</span>
-            </div>
-          </span>
-          <div class="delete-confirmation-button">
-            <button class="cancel-delete" {{action "cancelItemDeletion"}}>Cancel</button>
-            <button class="p-btn btn btn-danger m-0" {{action "confirmDelete"}}>Delete</button>
           </div>
         </div>
+      {{/if}}
+      <table class="w-100">
+        <tbody>
+          {{#each foundIncidentEntities as |foundEntity|}}
+            <tr>
+              <td>
+                {{#if (not interactionDisabled)}}
+                  <a href="{{details.url}}/incident/{{foundEntity.id}}">
+                    {{foundEntity.value}} {{fa-icon "external-link" fixedWidth=true class="external-link-icon"}}
+                  </a>
+                {{else}}
+                  <a>{{foundEntity.value}} {{fa-icon "external-link" fixedWidth=true class="external-link-icon"}}</a>
+                {{/if}}
+              </td>
+              <td class="type">
+                {{#if (eq foundEntity.severity 0)}}
+                  <span style="color: #9AA0A3; font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+                {{#if (eq foundEntity.severity 0.5)}}
+                  <span style="color: #3497FE; font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+                {{#if (eq foundEntity.severity 1)}}
+                  <span style="color: #00CD33; font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+                {{#if (eq foundEntity.severity 2)}}
+                  <span style="color: #FF9000; font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+                {{#if (eq foundEntity.severity 3)}}
+                  <span style="color: rgba(255, 23, 68, 0.7); font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+                {{#if (eq foundEntity.severity 4)}}
+                  <span style="color: #D0021C; font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+              </td>
+              {{#if block.userOptions.allowIndicatorDelete}}
+                <td class="icon">
+                  <button
+                    class="no-style-button delete"
+                    {{action "initiateIncidentDeletion" foundEntity}}
+                    title="Delete IOC from Cortex XSOAR"
+                    disabled={{interactionDisabled}}
+                  >
+                    {{fa-icon "trash" fixedWidth=true}}
+                  </button>
+                </td>
+              {{/if}}
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      <div class="d-flex flex-row justify-content-between align-items-center">
+        <div>
+          {{#if incidentDeleteIsRunning}}
+            {{fa-icon "spinner-third" fixedWidth=true spin=true}} Deleting...
+          {{/if}}
+        </div>
+
+        {{#if incidentDeleteMessage}}
+          <div class="alert alert-info mt-1">
+            {{incidentDeleteMessage}}
+          </div>
+        {{/if}}
+        {{#if incidentDeleteErrorMessage}}
+          <div class="alert alert-danger mt-1">
+            {{incidentDeleteErrorMessage}}
+          </div>
+        {{/if}}
       </div>
     {{/if}}
-    <table class="w-100">
-      <tbody>
-        {{#each foundEntities as |foundEntity|}}
-          <tr>
-            <td>
-              {{#if (not interactionDisabled)}}
-                <a href="{{details.url}}/TODO: ioc url goes here">
-                  {{foundEntity.value}} {{fa-icon "external-link" fixedWidth=true class="external-link-icon"}}
-                </a>
-              {{else}}
-                <a>{{foundEntity.value}} {{fa-icon "external-link" fixedWidth=true class="external-link-icon"}}</a>
-              {{/if}}
-            </td>
-            <td class="type">
-              <span>{{foundEntity.displayedType}}</span>
-            </td>
-            {{#if block.userOptions.allowDelete}}
-              <td class="icon">
-                <button
-                  class="no-style-button delete"
-                  {{action "initiateItemDeletion" foundEntity}}
-                  title="Delete IOC from ThreatConnect"
-                  disabled={{interactionDisabled}}
-                >
-                  {{fa-icon "trash" fixedWidth=true}}
-                </button>
-              </td>
-            {{/if}}
-          </tr>
-        {{/each}}
-      </tbody>
-    </table>
 
-    <div class="d-flex flex-row justify-content-between align-items-center">
+    {{#if (or newIncidentIocs.length newIncidentIocsToSubmit.length)}}
       <div>
-        {{#if deleteIsRunning}}
-          {{fa-icon "spinner-third" fixedWidth=true spin=true}} Deleting...
-        {{/if}}
-      </div>
-
-      {{#if deleteMessage}}
-        <div class="alert alert-info mt-1">
-          {{deleteMessage}}
+        <div class="title-with-button">
+          <h1 class="p-title">
+            {{fa-icon "sparkles" size="sm" fixedWidth=true}} Not Currently In Cortex XSOAR
+          </h1>
+          {{#if newIncidentIocs.length}}
+            <button
+              class="no-style-button add"
+              {{action "addAllSubmitIncidents"}}
+              title="Add all IOCs to Submission List"
+              disabled={{interactionDisabled}}
+            >
+              Add All
+            </button>
+          {{/if}}
         </div>
-      {{/if}}
-      {{#if deleteErrorMessage}}
-        <div class="alert alert-danger mt-1">
-          {{deleteErrorMessage}}
-        </div>
-      {{/if}}
-    </div>
-  {{/if}}
 
-  {{#if (or newIocs.length newIocsToSubmit.length)}}
-    <div> TODO: Make sure this div doesn't cause styling issues
-      <div class="title-with-button">
-        <h1 class="p-title">
-          {{fa-icon "sparkles" size="sm" fixedWidth=true}} Not Currently In ___
-        </h1>
-        {{#if newIocs.length}}
-          <button
-            class="no-style-button add"
-            {{action "addAllSubmitItems"}}
-            title="Add all IOCs to Submission List"
-            disabled={{interactionDisabled}}
-          >
-            Add All
-          </button>
-        {{/if}}
-      </div>
-
-      <table class="w-100">
-        <tbody>
-          {{#each newIocs as |entity|}}
-            <tr>
-              <td>
-                <span>{{entity.value}}</span>
-              </td>
-              <td class="type">
-                <span>{{entity.displayedType}}</span>
-              </td>
-              <td class="icon">
-                <button
-                  class="no-style-button add"
-                  {{action "addSubmitItem" entity}}
-                  title="Add IOC to Submission List"
-                  disabled={{interactionDisabled}}
-                >
-                  {{fa-icon "plus" fixedWidth=true}}
-                </button>
-              </td>
-            </tr>
-          {{/each}}
-        </tbody>
-      </table>
-      
-      {{#if (not newIocs.length)}}
-        <div class="note">
-          <span class="p-key"><em>NONE</em></span>
-        </div>
-      {{/if}}
-    </div>
-
-    <div>
-      <div class="title-with-button">
-        <h1 class="p-title">
-          {{fa-icon "upload" size="sm" fixedWidth=true}} To Be Submitted to ___
-        </h1>
-        {{#if newIocsToSubmit.length}}
-          <button
-            class="no-style-button remove"
-            title="Remove all IOCs from Submission List"
-            {{action "removeAllSubmitItems"}}
-            disabled={{interactionDisabled}}
-          >
-            Remove All
-          </button>
-        {{/if}}
-      </div>
-
-      <table class="w-100">
-        <tbody>
-          {{#each newIocsToSubmit as |entity|}}
-            <tr>
-              <td>
-                <span>
-                  {{entity.value}}
-                </span> 
-              </td>
-              <td class="type">
-                <span>
-                  {{entity.displayedType}}
-                </span>
-              </td>
-              <td class="icon">
-                <button
-                  class="no-style-button remove"
-                  title="Remove IOC from Submission List"
-                  {{action "removeSubmitItem" entity}}
-                  disabled={{interactionDisabled}}
-                >
-                  {{fa-icon "minus" fixedWidth=true}}
-                </button>
-              </td>
-            </tr>
-          {{/each}}
-        </tbody>
-      </table>
-
-      {{#if (not newIocsToSubmit.length)}}
-        <div class="note">
-          <span class="p-key"><em>NONE</em></span>
-        </div>
-      {{/if}}
-    </div>
-
-    <div>
-      <h1 class="p-title submission-options py-1">
-        {{fa-icon "cog" size="sm" fixedWidth=true}} Submission Options
-      </h1>
-
-      {{!-- TODO: Add selection-container div's with Submission Options needed here --}}
-      <div class="tag-container">
-        <h1 class="p-title">
-          {{fa-icon "tags" fixedWidth=true}} Tags
-        </h1>
-        {{#if (eq selectedTags.length 0)}}
-          <span class="p-footnote mb-2 mt-2">
-            <span><em>&nbsp; No Tags &nbsp;</em></span>
-          </span>
-        {{else}}
-          {{#each (take maxTagsInBlock selectedTags) as |tag tagIndex|}}
-            {{#if tag.isNew}}
-              <span class="tag link-tag d-inline-flex align-items-center">
-                <span class="text-container summary-tag {{unless interactionDisabled "rounded-borders"}}">
-                  {{tag.name}}
-                  {{#if (not interactionDisabled)}}
-                    <span class="remove-icon-container" {{action "deleteTag" tag}}>
-                      {{fa-icon "times" class="tag-close-icon" fixedWidth=true}}
-                    </span>
-                  {{/if}}
-                </span>
-              </span>
-            {{else}}
-              <a href="{{details.url}} TODO: tag url goes here" class="tag link-tag d-inline-flex align-items-center">
-                <span class="text-container summary-tag {{unless interactionDisabled "rounded-borders"}}">
-                  {{tag.name}}
-                  {{#if (not interactionDisabled)}}
-                    <span class="remove-icon-container" {{action "deleteTag" tag}}>
-                      {{fa-icon "times" class="tag-close-icon" fixedWidth=true}}
-                    </span>
-                  {{/if}}
-                </span>
-              </a>
-            {{/if}}
-          {{/each}}
-        {{/if}}
-        {{#unless (or editingTags interactionDisabled)}}
-          <button class="open-modal-btn" {{action "editTags"}}>
-            {{fa-icon "plus" class="open-modal-btn-icon" fixedWidth=true}}
-          </button>
-        {{/unless}}
-
-        {{#if editingTags}}
-          <div class="show-tag-modal">
-            <div>
-              {{#power-select-multiple
-                triggerClass="form-control"
-                selected=selectedTag
-                options=existingTags
-                searchEnabled=true
-                search=(action "searchTags")
-                placeholder="Search Tags"
-                searchField="name"
-                searchMessage="Loading Tags ..."
-                loadingMessage="Loading Tags ..."
-                searchPlaceholder="Search tags"
-                closeOnSelect=true
-                disabled=interactionDisabled
-                onOpen=(action "searchTags" "")
-                onChange=(action (mut selectedTag)) as |tag|
-              }}
-                <span
-                  class="p-tag"
-                  style="word-break: break-word; margin: 10px 0; display:inline-block; line-height: 1.2em; font-size: 12px; box-shadow: 3px 3px 3px #888888; padding: 4px; border-radius: 4px;background-color: #fff; border: 1px solid #f97b06; padding: 1px 5px 2px 7px; border-radius: 16px; color: #07213a; 5px 0;"
-                >
-                  {{tag.name}}
-                  <span style="position: relative; top: 1px">
-                    {{#if tag.isNew}}
-                      {{fa-icon "plus-circle" fixedWidth=true}}
-                    {{else}}
-                      {{fa-icon "check-circle" fixedWidth=true}}
-                    {{/if}}
-                  </span>
-                </span>
-              {{/power-select-multiple}}
-            </div>
-            <div class="modal-buttons">
-              <button class="tag-btn" {{action "editTags"}} disabled={{interactionDisabled}}>Cancel</button>
-              <button class="tag-btn" {{action "addTags"}} disabled={{interactionDisabled}}>Add Tags</button>
-            </div>
+        <table class="w-100">
+          <tbody>
+            {{#each newIncidentIocs as |entity|}}
+              <tr>
+                <td>
+                  <span>{{entity.value}}</span>
+                </td>
+                <td class="type">
+                  <span>{{entity.displayedType}}</span>
+                </td>
+                <td class="icon">
+                  <button
+                    class="no-style-button add"
+                    {{action "addSubmitIncident" entity}}
+                    title="Add IOC to Submission List"
+                    disabled={{interactionDisabled}}
+                  >
+                    {{fa-icon "plus" fixedWidth=true}}
+                  </button>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+        
+        {{#if (not newIncidentIocs.length)}}
+          <div class="note">
+            <span class="p-key"><em>NONE</em></span>
           </div>
         {{/if}}
       </div>
-    </div>
 
-    <div class="d-flex flex-row-reverse justify-content-between align-items-center mt-2">
-      <button {{action "submitItems"}}
+      <div>
+        <div class="title-with-button">
+          <h1 class="p-title">
+            {{fa-icon "upload" size="sm" fixedWidth=true}} To Be Submitted to Cortex XSOAR
+          </h1>
+          {{#if newIncidentIocsToSubmit.length}}
+            <button
+              class="no-style-button remove"
+              title="Remove all IOCs from Submission List"
+              {{action "removeAllSubmitIncidents"}}
               disabled={{interactionDisabled}}
-              class="p-btn btn btn-secondary m-0">
-        {{#if createIsRunning}}
-          {{fa-icon "spinner-third" fixedWidth=true spin=true}}
-        {{else}}
-          Submit IOCs
+            >
+              Remove All
+            </button>
+          {{/if}}
+        </div>
+
+        <table class="w-100">
+          <tbody>
+            {{#each newIncidentIocsToSubmit as |entity|}}
+              <tr>
+                <td>
+                  <span>
+                    {{entity.value}}
+                  </span> 
+                </td>
+                <td class="type">
+                  <span>
+                    {{entity.displayedType}}
+                  </span>
+                </td>
+                <td class="icon">
+                  <button
+                    class="no-style-button remove"
+                    title="Remove IOC from Submission List"
+                    {{action "removeSubmitIncidents" entity}}
+                    disabled={{interactionDisabled}}
+                  >
+                    {{fa-icon "minus" fixedWidth=true}}
+                  </button>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+
+        {{#if (not newIncidentIocsToSubmit.length)}}
+          <div class="note">
+            <span class="p-key"><em>NONE</em></span>
+          </div>
         {{/if}}
-      </button>
+      </div>
 
-      {{#if createMessage}}
-        <div class="create-message alert alert-info m-0">
-          {{createMessage}}
-        </div>
-      {{/if}}
+      <div>
+        <h1 class="p-title submission-options py-1">
+          {{fa-icon "cog" size="sm" fixedWidth=true}} Submission Options
+        </h1>
 
-      {{#if createErrorMessage}}
-        <div class="create-message alert alert-danger m-0">
-          {{createErrorMessage}}
+        <div class="select-container">
+          <span class="p-value">Details: </span>
+          {{textarea
+            class="w-100"
+            rows=2
+            placeholder="Incident Details"
+            value=submissionDetails
+            disabled=interactionDisabled
+          }}
         </div>
-      {{/if}}
+
+        <div class="select-container">
+          <span class="p-value">Incident Type: </span>
+          {{#power-select
+            options=foundIncidentTypes
+            selected=selectedIncidentType
+            searchEnabled=true
+            searchField="name"
+            placeholder="Select Incident Types..."
+            triggerClass="form-control"
+            search=(action "searchIncidentTypes")
+            searchMessage="Loading Incident Types ..."
+            loadingMessage="Loading Incident Types ..."
+            searchPlaceholder="Search Incident Types"
+            closeOnSelect=true
+            onOpen=(action "searchIncidentTypes" "")
+            onChange=(action (mut selectedIncidentType)) as |type|}}
+            <span>{{type.name}}</span>
+          {{/power-select}}
+        </div>
+
+        <div class="select-container pt-1">
+          <span class="p-value">Severity: </span>
+          <select class="w-100" onchange={{action (mut severity) value="target.value"}}>
+            <option style="color: #9AA0A3; font-weight: 600" value="0">
+              {{fa-icon "bomb" fixedWidth=true}} Unknown
+            </option>
+            <option style="color: #3497FE; font-weight: 600" value="0.5">
+              {{fa-icon "bullhorn" fixedWidth=true}} Informational
+            </option>
+            <option style="color: #00CD33; font-weight: 600" value="1">
+              {{fa-icon "burn" fixedWidth=true}} Low
+            </option>
+            <option style="color: #FF9000; font-weight: 600" value="2">
+              {{fa-icon "fire" fixedWidth=true}} Medium
+            </option>
+            <option style="color: rgba(255, 23, 68, 0.7); font-weight: 600" value="3">
+              {{fa-icon "fire-alt" fixedWidth=true}} High
+            </option>
+            <option style="color: #D0021C; font-weight: 600" value="4">
+              {{fa-icon "exclamation" fixedWidth=true}} Critical
+            </option>
+          </select>
+        </div>
+        <div class="select-container pt-1">
+          <span class="p-value">Playbooks: </span>
+          <select class="w-100" size=4 onchange={{action (mut newIncidentPlaybookId) value="target.value"}}>
+            {{#each playbooks as |playbook|}}
+              <option value="{{playbook.id}}">{{playbook.name}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+
+      <div class="d-flex flex-row-reverse justify-content-between align-items-center mt-2">
+        <button {{action "submitIncidents"}}
+                disabled={{interactionDisabled}}
+                class="p-btn btn btn-secondary m-0">
+          {{#if createIncidentsIsRunning}}
+            {{fa-icon "spinner-third" fixedWidth=true spin=true}}
+          {{else}}
+            Submit Incidents
+          {{/if}}
+        </button>
+
+        {{#if createIncidentMessage}}
+          <div class="create-message alert alert-info m-0">
+            {{createIncidentMessage}}
+          </div>
+        {{/if}}
+
+        {{#if createIncidentErrorMessage}}
+          <div class="create-message alert alert-danger m-0">
+            {{createIncidentErrorMessage}}
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
+  </div>
+  {{#if (and (not foundIncidentEntities.length) (not (or newIncidentIocs.length newIncidentIocsToSubmit.length)))}}
+    <div class="note">
+      <span class="p-key"><em>All "Already In Cortex XSOAR" IOCs have been deleted</em></span>
     </div>
   {{/if}}
-</div>
-{{#if (and (not foundEntities.length) (not (or newIocs.length newIocsToSubmit.length)))}}
-  <div class="note">
-    <span class="p-key"><em>All Already In ___ IOCs have been deleted</em></span>
+{{/if}}
+{{#if (eq activeTab "indicators")}}
+  <div class={{if (and (not (or newIndicatorIocs.length newIndicatorIocsToSubmit.length)) interactionDisabled) "modal-open"}}>
+    {{#if foundIndicatorEntities.length}}
+      <h1 class="p-title">
+        {{fa-icon "info-circle" size="sm"}} Already In Cortex XSOAR
+      </h1>
+      {{#if indicatorIsDeleting}}
+        <div class="ioc-deletion-modal">
+          <div class="note">
+            <span class="p-key">
+              <span class="p-value"><em><b>DANGER:</b></em></span>
+              <div>
+                <span>
+                  Deleting an indicator cannot be undone and will remove all data for the 
+                  indicator in Cortex XSOAR.  Deletion will not exclude the indicator from
+                  future creation.
+                </span>
+              </div>
+              <div>
+                <span>Are you sure you want to delete the indicator <em><b>{{indicatorToDelete.value}}</b></em>?</span>
+              </div>
+            </span>
+            <div class="delete-confirmation-button">
+              <button 
+                class="cancel-delete" 
+                {{action "cancelIndicatorDeletion"}}
+                disabled={{indicatorDeleteIsRunning}}
+              >
+                Cancel
+              </button>
+              <button
+                class="p-btn btn btn-danger m-0"
+                {{action "confirmIndicatorDelete"}}
+                disabled={{indicatorDeleteIsRunning}}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+      <table class="w-100">
+        <tbody>
+          {{#each foundIndicatorEntities as |foundEntity|}}
+            <tr>
+              <td>
+                {{#if (not interactionDisabled)}}
+                  <a href="{{details.url}}/indicator/{{foundEntity.id}}">
+                    {{foundEntity.value}} {{fa-icon "external-link" fixedWidth=true class="external-link-icon"}}
+                  </a>
+                {{else}}
+                  <a>{{foundEntity.value}} {{fa-icon "external-link" fixedWidth=true class="external-link-icon"}}</a>
+                {{/if}}
+              </td>
+              <td class="type">
+                {{#if (eq foundEntity.score 0)}}
+                  <span style="color: #9AA0A3; font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+                {{#if (eq foundEntity.score 1)}}
+                  <span style="color: #00CD33; font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+                {{#if (eq foundEntity.score 2)}}
+                  <span style="color: #FF9000; font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+                {{#if (eq foundEntity.score 3)}}
+                  <span style="color: #ff1644; font-weight: 600">
+                    {{foundEntity.displayedType}}
+                  </span>
+                {{/if}}
+              </td>
+              {{#if block.userOptions.allowIndicatorDelete}}
+                <td class="icon">
+                  <button
+                    class="no-style-button delete"
+                    {{action "initiateIndicatorDeletion" foundEntity}}
+                    title="Delete IOC from Cortex XSOAR"
+                    disabled={{interactionDisabled}}
+                  >
+                    {{fa-icon "trash" fixedWidth=true}}
+                  </button>
+                </td>
+              {{/if}}
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      <div class="d-flex flex-row justify-content-between align-items-center">
+        <div>
+          {{#if indicatorDeleteIsRunning}}
+            {{fa-icon "spinner-third" fixedWidth=true spin=true}} Deleting...
+          {{/if}}
+        </div>
+
+        {{#if indicatorDeleteMessage}}
+          <div class="alert alert-info mt-1">
+            {{indicatorDeleteMessage}}
+          </div>
+        {{/if}}
+        {{#if indicatorDeleteErrorMessage}}
+          <div class="alert alert-danger mt-1">
+            {{indicatorDeleteErrorMessage}}
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
+
+    {{#if (or newIndicatorIocs.length newIndicatorIocsToSubmit.length)}}
+      <div>
+        <div class="title-with-button">
+          <h1 class="p-title">
+            {{fa-icon "sparkles" size="sm" fixedWidth=true}} Not Currently In Cortex XSOAR
+          </h1>
+          {{#if newIndicatorIocs.length}}
+            <button
+              class="no-style-button add"
+              {{action "addAllSubmitIndicators"}}
+              title="Add all IOCs to Submission List"
+              disabled={{interactionDisabled}}
+            >
+              Add All
+            </button>
+          {{/if}}
+        </div>
+
+        <table class="w-100">
+          <tbody>
+            {{#each newIndicatorIocs as |entity|}}
+              <tr>
+                <td>
+                  <span>{{entity.value}}</span>
+                </td>
+                <td class="type">
+                  <span>{{entity.displayedType}}</span>
+                </td>
+                <td class="icon">
+                  <button
+                    class="no-style-button add"
+                    {{action "addSubmitIndicator" entity}}
+                    title="Add IOC to Submission List"
+                    disabled={{interactionDisabled}}
+                  >
+                    {{fa-icon "plus" fixedWidth=true}}
+                  </button>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+        
+        {{#if (not newIndicatorIocs.length)}}
+          <div class="note">
+            <span class="p-key"><em>NONE</em></span>
+          </div>
+        {{/if}}
+      </div>
+
+      <div>
+        <div class="title-with-button">
+          <h1 class="p-title">
+            {{fa-icon "upload" size="sm" fixedWidth=true}} To Be Submitted to Cortex XSOAR
+          </h1>
+          {{#if newIndicatorIocsToSubmit.length}}
+            <button
+              class="no-style-button remove"
+              title="Remove all IOCs from Submission List"
+              {{action "removeAllSubmitIndicators"}}
+              disabled={{interactionDisabled}}
+            >
+              Remove All
+            </button>
+          {{/if}}
+        </div>
+
+        <table class="w-100">
+          <tbody>
+            {{#each newIndicatorIocsToSubmit as |entity|}}
+              <tr>
+                <td>
+                  <span>
+                    {{entity.value}}
+                  </span> 
+                </td>
+                <td class="type">
+                  <span>
+                    {{entity.displayedType}}
+                  </span>
+                </td>
+                <td class="icon">
+                  <button
+                    class="no-style-button remove"
+                    title="Remove IOC from Submission List"
+                    {{action "removeSubmitIndicator" entity}}
+                    disabled={{interactionDisabled}}
+                  >
+                    {{fa-icon "minus" fixedWidth=true}}
+                  </button>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+
+        {{#if (not newIndicatorIocsToSubmit.length)}}
+          <div class="note">
+            <span class="p-key"><em>NONE</em></span>
+          </div>
+        {{/if}}
+      </div>
+
+      <div>
+        <h1 class="p-title submission-options py-1">
+          {{fa-icon "cog" size="sm" fixedWidth=true}} Submission Options
+        </h1>
+
+        <div class="select-container">
+          <span class="p-value">Indicator Type: </span>
+          {{#power-select
+            options=foundIndicatorTypes
+            selected=selectedIndicatorType
+            searchEnabled=true
+            searchField="details"
+            placeholder="Select Indicator Types..."
+            triggerClass="form-control"
+            search=(action "searchIndicatorTypes")
+            searchMessage="Loading Indicator Types ..."
+            loadingMessage="Loading Indicator Types ..."
+            searchPlaceholder="Search Indicator Types"
+            closeOnSelect=true
+            onOpen=(action "searchIndicatorTypes" "")
+            onChange=(action (mut selectedIndicatorType)) as |type|}}
+            <span>{{type.details}}</span>
+          {{/power-select}}
+        </div>
+        
+        <div class="select-container pt-1">
+          <span class="p-value">Reputation: </span>
+          <select class="w-100" onchange={{action (mut reputation) value="target.value"}}>
+            <option style="color: #9aa0a3; font-weight: 600" value="0">
+              {{fa-icon "burn" fixedWidth=true}} None
+            </option>
+            <option style="color: #00CD33; font-weight: 600" value="1">
+              {{fa-icon "bomb" fixedWidth=true}} Good
+            </option>
+            <option style="color: #FF9000; font-weight: 600" value="2">
+              {{fa-icon "bullhorn" fixedWidth=true}} Suspicious
+            </option>
+            <option style="color: #ff1644; font-weight: 600" value="3">
+              {{fa-icon "bullhorn" fixedWidth=true}} Bad
+            </option>
+          </select>
+        </div>
+        
+        <div class="select-container last">
+          <span class="p-value">Add a Comment: </span>
+          {{textarea
+            class="w-100"
+            rows=2
+            placeholder="Polarity Indicator Comment"
+            value=indicatorComment
+            disabled=interactionDisabled
+          }}
+        </div>
+      </div>
+
+      <div class="d-flex flex-row-reverse justify-content-between align-items-center mt-2">
+        <button {{action "submitIndicators"}}
+                disabled={{interactionDisabled}}
+                class="p-btn btn btn-secondary m-0">
+          {{#if createIncidentsIsRunning}}
+            {{fa-icon "spinner-third" fixedWidth=true spin=true}}
+          {{else}}
+            Submit Indicators
+          {{/if}}
+        </button>
+
+        {{#if createIndicatorMessage}}
+          <div class="create-message alert alert-info m-0">
+            {{createIndicatorMessage}}
+          </div>
+        {{/if}}
+
+        {{#if createIndicatorErrorMessage}}
+          <div class="create-message alert alert-danger m-0">
+            {{createIndicatorErrorMessage}}
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
   </div>
+  {{#if (and (not foundIndicatorEntities.length) (not (or newIndicatorIocs.length newIndicatorIocsToSubmit.length)))}}
+    <div class="note">
+      <span class="p-key"><em>All "Already In Cortex XSOAR" IOCs have been deleted</em></span>
+    </div>
+  {{/if}}
 {{/if}}

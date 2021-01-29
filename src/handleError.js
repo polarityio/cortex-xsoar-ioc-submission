@@ -1,18 +1,22 @@
 const STATUS_CODE_ERROR_MESSAGE = {
-  // TODO: Modify these as needed
   400: (error) => ({
-    err: error.message,
-    detail: error.description
-  }),
-  401: (error) => ({
     err: 'Unauthorized',
     detail: 'Unable to retrieve Auth Token -> ' + `${error.description}`
+  }),
+  403: (error) => ({
+    err: 'Token Expired',
+    detail:
+      'The Token has Expired or is Incorrect.  Verify your token is correct and retry your request to reauthorize.'
   }),
   404: (error) => ({
     err: 'Not Found',
     detail:
       'Requested item doesn’t exist or not enough access permissions -> ' +
       `${error.description}`
+  }),
+  405: (error) => ({
+    err: 'Incident Query Error',
+    detail: 'Possible malformed request -> ' + `${error.description}`
   }),
   500: (error) => ({
     err: 'Server Error',
@@ -47,13 +51,12 @@ const handleError = (error) =>
   )(error);
 
 const checkForInternalServiceError = (statusCode, response) => {
-  // TODO: Modify for your apps internal error types/messsages
-  const { status } = response;
-  if (['Error', 'Failure'].includes(status)) {
-    const internalServiceError = Error(response.message);
-    internalServiceError.status = 'internalServiceError';
-    internalServiceError.description = response.message;
-    throw internalServiceError;
+  const { error, detail } = response || {};
+  if (error) {
+    const internalDemistoError = Error('Internal Demisto Query Error');
+    internalDemistoError.status = 'internalServiceError';
+    internalDemistoError.description = `${error} -> ${detail}`;
+    throw internalDemistoError;
   }
   return response;
 };
