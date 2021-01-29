@@ -329,9 +329,9 @@
       </div>
     {{/if}}
   </div>
-  {{#if (and (not foundIndicatorEntities.length) (not (or newIncidentIocs.length newIncidentIocsToSubmit.length)))}}
+  {{#if (and (not foundIncidentEntities.length) (not (or newIncidentIocs.length newIncidentIocsToSubmit.length)))}}
     <div class="note">
-      <span class="p-key"><em>All Already In Cortex XSOAR IOCs have been deleted</em></span>
+      <span class="p-key"><em>All "Already In Cortex XSOAR" IOCs have been deleted</em></span>
     </div>
   {{/if}}
 {{/if}}
@@ -349,7 +349,7 @@
               <div>
                 <span>
                   Deleting an indicator cannot be undone and will remove all data for the 
-                  indicator in Cortex XSOAR.  Deletion will not exclude the indication from
+                  indicator in Cortex XSOAR.  Deletion will not exclude the indicator from
                   future creation.
                 </span>
               </div>
@@ -633,7 +633,7 @@
   </div>
   {{#if (and (not foundIndicatorEntities.length) (not (or newIndicatorIocs.length newIndicatorIocsToSubmit.length)))}}
     <div class="note">
-      <span class="p-key"><em>All Already In Cortex XSOAR IOCs have been deleted</em></span>
+      <span class="p-key"><em>All "Already In Cortex XSOAR" IOCs have been deleted</em></span>
     </div>
   {{/if}}
 {{/if}}
