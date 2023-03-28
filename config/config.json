@@ -1,4 +1,5 @@
 {
+  "polarityIntegrationUuid": "ea0c0e80-cce1-11ed-aeee-075d3490155d",
   "name": "Cortex XSOAR IOC Submission",
   "acronym": "CX+",
   "description": "Polarity integration that connects to the Cortex XSOAR threat intelligence platform using the IOC Submission interface format.",
