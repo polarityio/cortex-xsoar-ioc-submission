@@ -41,6 +41,7 @@ const createLookupResults = async (
         ...entities[0],
         value: 'Cortex XSOAR IOC Submission'
       },
+      displayValue: 'Cortex XSOAR IOC Submission',
       isVolatile: true,
       data: {
         summary,
