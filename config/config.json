@@ -3,16 +3,8 @@
   "name": "Cortex XSOAR IOC Submission",
   "acronym": "CX+",
   "description": "Polarity integration that connects to the Cortex XSOAR threat intelligence platform using the IOC Submission interface format.",
-  "entityTypes": [
-    "IPv4",
-    "IPv6",
-    "hash",
-    "domain",
-    "email"
-  ],
-  "styles": [
-    "./styles/styles.less"
-  ],
+  "entityTypes": ["IPv4", "IPv6", "MD5", "SHA1", "SHA256", "domain", "email"],
+  "styles": ["./styles/styles.less"],
   "block": {
     "component": {
       "file": "./components/block.js"
@@ -31,13 +23,6 @@
   },
   "onDemandOnly": true,
   "defaultColor": "light-purple",
-  "request": {
-    "cert": "",
-    "key": "",
-    "passphrase": "",
-    "ca": "",
-    "proxy": ""
-  },
   "logging": {
     "level": "info"
   },
