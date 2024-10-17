@@ -3,7 +3,7 @@ module.exports = {
   acronym: 'CX+',
   description:
     'Polarity integration that connects to the Cortex XSOAR threat intelligence platform using the IOC Submission interface format.',
-  entityTypes: ['IPv4', 'IPv6', 'hash', 'domain', 'email'],
+  entityTypes: ['IPv4', 'IPv6', 'MD5', 'SHA1', 'SHA256', 'domain', 'email'],
   styles: ['./styles/styles.less'],
   block: {
     component: {
@@ -28,7 +28,7 @@ module.exports = {
     key: '',
     passphrase: '',
     ca: '',
-    proxy: ""
+    proxy: ''
   },
   logging: {
     level: 'info' //trace, debug, info, warn, error, fatal
